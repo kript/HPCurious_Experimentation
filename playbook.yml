@@ -1,0 +1,75 @@
+- name: setup wodpress and utilities
+  hosts: all
+  sudo: True
+
+  vars:
+    http_port: 80
+    domain: hpcurious.com
+
+  tasks:
+
+  - name: install packages
+    apt: name={{ item }} update_cache=yes state=latest
+    with_items:
+      - wordpress
+      - curl
+      - vim
+      - mysql-server
+
+  - name: enabled mod_rewrite
+    apache2_module: name=rewrite state=present
+    notify:
+    - restart apache2
+
+  - name: create virtual host file
+    template: src=virtualhost.conf dest=/etc/apache2/sites-available/{{ domain }}.conf
+
+  - name: enable virtual host file with a2ensite {{ domain }}
+    command: a2ensite {{ domain }}
+    args:
+      creates: /etc/apache2/sites-enabled/{{ domain }}.conf
+    notify:
+    - restart apache2
+
+  - name: Download WP-CLI
+    shell: curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    args:
+      creates: ./wp-cli.phar
+
+  - name: Make WP-CLI executable
+    file:
+      path: ./wp-cli.phar
+      mode: 0755
+
+  - name: Move WP-CLI to /usr/local/bin/wp
+    command: mv ./wp-cli.phar /usr/local/bin/wp
+    args:
+      creates: /usr/local/bin/wp
+
+  - name: download Bash Completion file for WP-CLI
+    shell: curl -O https://raw.githubusercontent.com/wp-cli/wp-cli/master/utils/wp-completion.bash
+    args:
+      creates: ./wp-completion.bash
+
+  - name: Move wp-cli bash completion file to shared area
+    command: mv ./wp-completion.bash /usr/local/etc/
+    args:
+      creates: /usr/local/etc/wp-completion.bash
+
+  - name: add WP-CLI bash completion to .bash_profile
+    lineinfile: 
+      dest: /home/vagrant/.bash_profile
+      line: source /usr/local/etc/wp-completion.bash
+      create: yes
+      owner: vagrant
+
+  # worpress install notes from https://help.ubuntu.com/community/WordPress
+  - name: make link for wordpress for apache destination
+    file:
+      src: /usr/share/wordpress
+      dest: /var/www/wordpress
+      state: link
+
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted
