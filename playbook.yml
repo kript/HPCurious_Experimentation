@@ -1,3 +1,8 @@
+
+# hint to run:
+# ansible-playbook playbook.yml -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory -u vagrant
+
+
 - name: setup wodpress and utilities
   hosts: all
   sudo: True
@@ -7,6 +12,15 @@
     domain: hpcurious.com
 
   tasks:
+
+  - name: add domain to localhost so it thinks its authoratiative
+    lineinfile: 
+      dest: /etc/hosts 
+      regexp: "^127.0.0.1 {{ domain }}" 
+      line: "127.0.0.1 {{ domain }}" 
+      owner: root 
+      group: root 
+      mode: 0644
 
   - name: install packages
     apt: name={{ item }} update_cache=yes state=latest
@@ -41,8 +55,8 @@
       path: ./wp-cli.phar
       mode: 0755
 
-  - name: Move WP-CLI to /usr/local/bin/wp
-    command: mv ./wp-cli.phar /usr/local/bin/wp
+  - name: Copy WP-CLI to /usr/local/bin/wp
+    command: cp ./wp-cli.phar /usr/local/bin/wp
     args:
       creates: /usr/local/bin/wp
 
@@ -51,8 +65,8 @@
     args:
       creates: ./wp-completion.bash
 
-  - name: Move wp-cli bash completion file to shared area
-    command: mv ./wp-completion.bash /usr/local/etc/
+  - name: Copy wp-cli bash completion file to shared area
+    command: cp ./wp-completion.bash /usr/local/etc/
     args:
       creates: /usr/local/etc/wp-completion.bash
 
@@ -69,6 +83,26 @@
       src: /usr/share/wordpress
       dest: /var/www/wordpress
       state: link
+
+  - name: chown /usr/share/wordpress to allow automatic updates to occur
+    file:
+      path: /usr/share/wordpress
+      owner: www-data
+      recurse: yes
+
+  - name: uncompress wordpress/mysql setup script
+    unarchive: 
+      src: /usr/share/doc/wordpress/examples/setup-mysql.gz
+      dest: /usr/share/doc/wordpress/examples/
+      copy: no
+      creates: /usr/share/doc/wordpress/examples/setup-mysql
+
+  #Also sets up /srv/www/wp-content/{{ domain }}
+  - name: Configure Wordpress for {{ domain }}
+    command: bash /usr/share/doc/wordpress/examples/setup-mysql -n wordpress{{ domain }}
+    args:
+        creates: /etc/wordpress/config-{{ domain }}.php
+    
 
   handlers:
     - name: restart apache2
