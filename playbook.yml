@@ -3,7 +3,7 @@
 # ansible-playbook playbook.yml -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory -u vagrant
 
 
-- name: setup wodpress and utilities
+- name: setup wordpress and utilities
   hosts: all
   sudo: True
 
@@ -12,6 +12,12 @@
     domain: hpcurious.com
 
   tasks:
+
+  - name: add vagrant user to www-data group so it can read wordpress files
+    user:
+      name: vagrant
+      groups: www-data
+      append: yes
 
   - name: add domain to localhost so it thinks its authoratiative
     lineinfile: 
@@ -92,10 +98,10 @@
 
   - name: uncompress wordpress/mysql setup script
     unarchive: 
+      creates: /usr/share/doc/wordpress/examples/setup-mysql
       src: /usr/share/doc/wordpress/examples/setup-mysql.gz
       dest: /usr/share/doc/wordpress/examples/
       copy: no
-      creates: /usr/share/doc/wordpress/examples/setup-mysql
 
   #Also sets up /srv/www/wp-content/{{ domain }}
   - name: Configure Wordpress for {{ domain }}
