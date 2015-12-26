@@ -1,0 +1,31 @@
+---
+- name: Update apt cache
+  apt: update_cache=yes cache_valid_time=3600
+  sudo: yes
+
+- name: Install required software
+  apt: name={{ item }} state=present
+  sudo: yes
+  with_items:
+    - apache2
+    - mysql-server
+    - php5-mysql
+    - php5
+    - libapache2-mod-php5
+    - php5-mcrypt
+    - python-mysqldb
+
+- name: add vagrant user to www-data group so it can read wordpress files
+  user:
+    name: vagrant
+    groups: www-data
+    append: yes
+
+- name: add domain to localhost so it thinks its authoratiative
+  lineinfile: 
+    dest: /etc/hosts 
+    regexp: "^127.0.0.1 {{ domain }}" 
+    line: "127.0.0.1 {{ domain }}" 
+    owner: root 
+    group: root 
+    mode: 0644

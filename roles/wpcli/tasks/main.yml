@@ -1,0 +1,33 @@
+---
+
+  - name: Download WP-CLI
+    shell: curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    args:
+      creates: ./wp-cli.phar
+
+  - name: Make WP-CLI executable
+    file:
+      path: ./wp-cli.phar
+      mode: 0755
+
+  - name: Copy WP-CLI to /usr/local/bin/wp
+    command: cp ./wp-cli.phar /usr/local/bin/wp
+    args:
+      creates: /usr/local/bin/wp
+
+  - name: download Bash Completion file for WP-CLI
+    shell: curl -O https://raw.githubusercontent.com/wp-cli/wp-cli/master/utils/wp-completion.bash
+    args:
+      creates: ./wp-completion.bash
+
+  - name: Copy wp-cli bash completion file to shared area
+    command: cp ./wp-completion.bash /usr/local/etc/
+    args:
+      creates: /usr/local/etc/wp-completion.bash
+
+  - name: add WP-CLI bash completion to .bash_profile
+    lineinfile: 
+      dest: /home/vagrant/.bash_profile
+      line: source /usr/local/etc/wp-completion.bash
+      create: yes
+      owner: vagrant
