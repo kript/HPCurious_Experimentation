@@ -1,2 +1,4 @@
 ---
 # vars file for server
+http_port: 80
+domain: hpcurious.com
