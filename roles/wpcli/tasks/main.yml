@@ -31,3 +31,23 @@
       line: source /usr/local/etc/wp-completion.bash
       create: yes
       owner: vagrant
+
+  - name: install mailchimp-for-wp plugin
+    command: wp plugin install mailchimp-for-wp
+    args:
+      chdir: /var/www/wordpress
+      creates: /var/www/wordpress/wp-content/plugins/mailchimp-for-wp/mailchimp-for-wp.php
+
+  - name: install mc4wp-captcha plugin
+    command: wp plugin install mc4wp-captcha
+    args:
+      chdir: /var/www/wordpress
+      creates: /var/www/wordpress/wp-content/plugins/mc4wp-captcha/mc4wp-captcha.php
+
+  - name: install updraftplus plugin
+    command: wp plugin install updraftplus
+    args:
+      chdir: /var/www/wordpress
+      creates: /var/www/wordpress/wp-content/plugins/updraftplus/updraftplus.php
+
+
