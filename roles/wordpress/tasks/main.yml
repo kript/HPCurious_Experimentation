@@ -16,6 +16,20 @@
   notify:
     - restart apache
 
+- name: enabled mod_rewrite (needed for pretty permalinks)
+  apache2_module: name=rewrite state=present
+  notify:
+    - restart apache
+
+- name: copy apache2.conf file (regex for the FileInclude would be nasty)
+  copy:
+    src=apache2.conf
+    dest=/etc/apache/apache2.conf
+    owner=root
+    force=yes  
+  notify:
+    - restart apache
+
 - name: Copy sample config file
   command: mv /var/www/wordpress/wp-config-sample.php /var/www/wordpress/wp-config.php creates=/var/www/wordpress/wp-config.php
 
